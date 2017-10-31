@@ -11,5 +11,7 @@ class Sorter {
 	fs::path workingDir = fs::current_path();
 public:
 	void initDirectory();
+	void addFilter(string fileExt, string destinationPath);
+	void cleanUp();
 };
 #endif /* tracker_h */
