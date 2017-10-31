@@ -14,22 +14,19 @@ void Sorter::initDirectory() {
 
 void Sorter::addFilter(string fileExt, string destinationPath) {
 	std::ofstream outfile;
-	outfile.open (".watch");
+	outfile.open (".watch", std::ios::app);
 	outfile << fileExt << " " << destinationPath << "\n";
 	outfile.close();	
 }
 
 void Sorter::cleanUp() {
-	/* for each line in .watch
-	 * all the files with respective file extension
-	 * move to appropriate folder
-	 * loop
-	 */
 	string word;
 	std::ifstream infile;
 	infile.open (".watch");
 	while (infile >> word) {
-		std::cout << word << " ";	
+		// for each file in folder	
+			// move file to appropriate folder	
+		// loop
 	}
 	infile.close();
 }
