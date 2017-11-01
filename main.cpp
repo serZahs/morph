@@ -29,8 +29,13 @@ int main (int argc, char *argv[]) {
 		} else if (command == "sort") {
 			demo.cleanUp();
 			return 0;
-		} 
+		} else {
+			std::cerr << "Error: too many/invalid arguments. " 
+				  << watch_err;
+			return -1;
+		}
 	} else {
 		std::cout << watch_cmds;
+		return 0;
 	}
 }

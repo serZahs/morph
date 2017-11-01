@@ -21,12 +21,34 @@ void Sorter::addFilter(string fileExt, string destinationPath) {
 
 void Sorter::cleanUp() {
 	string word;
+	string fileExtension;
+	string destinationPath;
 	std::ifstream infile;
 	infile.open (".watch");
 	while (infile >> word) {
-		// for each file in folder	
-			// move file to appropriate folder	
-		// loop
+		/* .watch stores filters in the following format:
+		 * 
+		 * <file extension> <destination for all files with extension>
+		 * e.g.
+		 * .jpg ~/Pictures
+		 *
+		 * so file extension must be accessed first and then
+		 * the path of the destination directory
+		 */
+		string currentFile;
+		string currentFileExtension;
+		fileExtension = word;
+		infile >> word;
+		destinationPath = word;
+		filters[fileExtension] = destinationPath;
+
+		for (auto &p : fs::directory_iterator(workingDir)) {
+			currentFileExtension = fs::path(p).extension(); 
+			currentFile = fs::path(p).filename();
+			if (!(filters.find(currentFileExtension) == filters.end())) {
+				fs::rename(fs::path(p), filters[currentFileExtension]+"/"+currentFile);
+			}
+		}
 	}
 	infile.close();
 }
