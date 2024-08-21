@@ -2,7 +2,7 @@ typedef struct
 {
     int LineNumber;
     char *Line;
-    //char *Filename;
+    char *Filename;
 } result_instance;
 
 typedef struct
@@ -38,12 +38,14 @@ FindInString(char *Buffer, char *Pattern, int *Index)
 }
 
 int
-FindInFile(char *Filename, char *Pattern, int *MatchCount)
+FindInFile(char *Directory, char *Filename, char *StartingDirectory, char *Pattern, int *MatchCount)
 {
-    FILE *File = fopen(Filename, "r");
+    // TODO: Leak
+    char *Path = StringConcat(Directory, Filename);
+    FILE *File = fopen(Path, "r");
     if (!File)
     {
-        printf("Error: Could not open file %s\n", Filename);
+        printf("Error: Could not open file %s\n", Path);
         return false;
     }
     char Buffer[200];
@@ -61,6 +63,8 @@ FindInFile(char *Filename, char *Pattern, int *MatchCount)
             result_instance Instance;
             Instance.LineNumber = LineCount;
             Instance.Line = Match;
+            Instance.Filename = StringConcat(StartingDirectory, Filename);
+            //printf("Found match in %s:%d\n", Instance.Filename, Instance.LineNumber);
             
             char *Location = PoolAllocate(&ResultsPool, sizeof(result_instance));
             *((result_instance*)Location) = Instance;
@@ -75,19 +79,76 @@ FindInFile(char *Filename, char *Pattern, int *MatchCount)
     return false;
 }
 
-void
-Find(find_results *ResultList, char *Filename, char *Pattern)
+int
+Find(find_results *ResultList, const char *FilePattern, const char *Pattern)
 {
-    PoolFree(&ResultsPool);
-    PoolFree(&ResultsDataPool);
-    int MatchCount;
-    if (FindInFile(Filename, Pattern, &MatchCount))
+    return FindEx(ResultList, FilePattern, NULL, Pattern, true);
+}
+
+int
+FindEx(find_results *ResultList, const char *FilePattern, char *StartingDirectory, const char *Pattern, int FreePool)
+{
+    if (FreePool)
     {
-        ResultList->Count = MatchCount;
-        ResultList->Results = (result_instance*)ResultsPool.Data;
+        PoolFree(&ResultsPool);
+        PoolFree(&ResultsDataPool);
     }
-    else
+    
+    WIN32_FIND_DATAA FindFileData;
+    HANDLE FindHandle = FindFirstFileA(FilePattern, &FindFileData);
+    if (FindHandle == INVALID_HANDLE_VALUE)
     {
-        ResultList->Count = 0;
+        printf("Error: Got an invalid handle for the first file %s\n", FilePattern);
+        return false;
     }
+    
+    while(1)
+    {
+        char *Filename = CopyString(FindFileData.cFileName); // TODO: Leak!
+        if (StartingDirectory) printf("Starting Directory: %s\n", StartingDirectory);
+        printf("For %s, found %s\n", FilePattern, Filename);
+        if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            if (!StringsMatch(Filename, ".") && !StringsMatch(Filename, ".."))
+            {
+                char *Directory = Substring((char*)FilePattern, 0, StringFindLast((char*)FilePattern, '*')); // TODO: Leak!
+                char *Suffix = Substring((char*)FilePattern, StringFindLast((char*)FilePattern, '*')-1, strlen(FilePattern)); // TODO: Leak!
+                char *P = StringConcat(Directory, Filename);
+                char *Path = StringConcat(P, Suffix);
+                char *InStartingDir;
+                if (!StartingDirectory)
+                {
+                    InStartingDir = StringConcat(Filename, "\\");
+                }
+                else
+                {
+                    InStartingDir = StringConcat(StringConcat(StartingDirectory, Filename), "\\"); 
+                }
+                FindEx(ResultList, Path, InStartingDir, Pattern, false);
+            }
+        }
+        else
+        {
+            char *Directory = Substring((char*)FilePattern, 0, StringFindLast((char*)FilePattern, '*')); // TODO: Leak!
+            int MatchCount;
+            if (FindInFile(Directory, Filename, StartingDirectory, (char*)Pattern, &MatchCount))
+            {
+                ResultList->Count += MatchCount;
+            }
+        }
+        if (!FindNextFileA(FindHandle, &FindFileData))
+        {
+            DWORD Error = GetLastError();
+            if (Error == ERROR_NO_MORE_FILES)
+                break;
+            else
+            {
+                printf("Error: Could not find next file: %d\n", Error);
+                return false;
+            }
+        }
+    }
+    FindClose(FindHandle);
+    ResultList->Results = (result_instance*)ResultsPool.Data;
+    return true;
 }

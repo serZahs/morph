@@ -6,6 +6,9 @@
 #include "raygui.h"
 
 double BackspaceTimer;
+#define NOGDI
+#define NOUSER
+#include <windows.h>
 
 #include "util.h"
 #include "ui.h"
@@ -15,7 +18,7 @@ ui_widget Widgets[10];
 
 int main()
 {
-    InitPool(&ResultsPool, 1*1024);
+    InitPool(&ResultsPool, 1*1024*1024);
     InitPool(&ResultsDataPool, 1*1024*1024);
     find_results ResultList;
     ResultList.Count = 0;
@@ -77,6 +80,9 @@ int main()
         }
         if (GuiButton((Rectangle){500.0f, Line1Y, 80, RowHeight}, "Find!"))
         {
+            // Reset the ResultList before calling Find.
+            ResultList.Count = 0;
+            ResultList.Results = NULL;
             Find(&ResultList, Filename, Value);
         }
         
@@ -96,15 +102,30 @@ int main()
             float Space = 8.0f;
             for (int ResultIndex = 0; ResultIndex < ResultList.Count; ResultIndex++)
             {
+                float MetadataWidth = 400.0f;
+                
                 result_instance Result = ResultList.Results[ResultIndex];
-                Rectangle ItemRect = {PanelContentRect.x + MarginX*2.0f, Line2Y + Space + ResultIndex * (ItemHeight + Space) + Scroll.y, PanelContentRect.width-MarginX*4.0f, ItemHeight};
+                Rectangle ItemRect = {
+                    PanelContentRect.x + MarginX*2.0f + (MetadataWidth + 10.0f), Line2Y + Space + ResultIndex * (ItemHeight + Space) + Scroll.y, PanelContentRect.width-MarginX*4.0f - (MetadataWidth + 10.0f),
+                    ItemHeight};
                 DrawRectangleRounded(ItemRect, Roundness, 10, (Color){20,20,20,255});
                 DrawRectangleRoundedLines(ItemRect, Roundness, 10, Thickness, (Color){40,40,40,255});
-                Vector2 Padding = {20.0f, (ItemRect.height - FontSmall.Size)/2.0f};
-                Vector2 TextPosition = {ItemRect.x + Padding.x, ItemRect.y + Padding.y};
-                char Buffer[200];
-                sprintf_s(Buffer, 200, "%d | %s", Result.LineNumber, Result.Line);
-                DrawTextEx(FontSmall.Font, Buffer, TextPosition, (float)FontSmall.Size, 0.0f, TextColor);
+                {
+                    Vector2 Padding = {20.0f, (ItemRect.height - FontSmall.Size)/2.0f};
+                    Vector2 TextPosition = {ItemRect.x + Padding.x, ItemRect.y + Padding.y};
+                    DrawTextEx(FontSmall.Font, Result.Line, TextPosition, (float)FontSmall.Size, 0.0f, TextColor);
+                }
+                
+                Rectangle MetadataRect = {PanelContentRect.x + MarginX*2.0f, Line2Y + Space + ResultIndex * (ItemHeight + Space) + Scroll.y, MetadataWidth, ItemHeight};
+                DrawRectangleRounded(MetadataRect, Roundness, 10, (Color){20,20,20,255});
+                DrawRectangleRoundedLines(MetadataRect, Roundness, 10, Thickness, (Color){40,40,40,255});
+                {
+                    Vector2 Padding = {20.0f, (MetadataRect.height - FontSmall.Size)/2.0f};
+                    Vector2 TextPosition = {MetadataRect.x + Padding.x, MetadataRect.y + Padding.y};
+                    char Buffer[200];
+                    sprintf_s(Buffer, 200, "%s:%d", Result.Filename, Result.LineNumber);
+                    DrawTextEx(FontSmall.Font, Buffer, TextPosition, (float)FontSmall.Size, 0.0f, TextColor);
+                }
             }
             EndScissorMode();
         }

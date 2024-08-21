@@ -3,6 +3,8 @@ Panic(char *FormatString) {
     char Buffer[200];
     sprintf_s(Buffer, 200, "Panic: %s", FormatString);
     printf("%s", Buffer);
+    
+    //DebugBreak();
     exit(1);
 }
 
@@ -29,7 +31,9 @@ char*
 PoolAllocate(pool *Pool, int Size)
 {
     if ((Pool->Used + Size) > Pool->Size)
-        Panic("Pool size exceeded\n");
+    {
+        Panic("A pool ran out of memory\n");
+    }
     char *Result = Pool->Data + Pool->Used;
     Pool->Used += Size;
     return Result;
@@ -67,4 +71,70 @@ RemoveChar(char *Text)
     {
         Text[Length-1] = '\0';
     }
+}
+
+char* CopyString(char *Source)
+{
+    if (!Source) return NULL;
+    int Size = (int)strlen(Source);
+    char* Result = (char*)malloc(Size + 1);
+    memcpy(Result, Source, Size);
+    Result[Size] = '\0';
+    return Result;
+}
+
+int
+StringFindLast(char *Buffer, char Target)
+{
+    int BufferSize = (int)strlen(Buffer);
+    int CharIndex = BufferSize - 1;
+    while (CharIndex >= 0)
+    {
+        if (Buffer[CharIndex--] == Target)
+            return CharIndex + 1;
+    }
+    return -1;
+}
+
+char*
+Substring(char *Buffer, int Start, int End)
+{
+    int BufferSize = (int)strlen(Buffer);
+    if (Start < 0 || End > BufferSize || Start >= End || BufferSize <= 0)
+        return NULL;
+    char *Result = (char*)malloc(End - Start + 1);
+    memcpy(Result, Buffer + Start, End - Start);
+    Result[End - Start] = '\0';
+    return Result;
+}
+
+char*
+StringConcat(char *First, char *Second)
+{
+    if (!First) return Second;
+    if (!Second) return First;
+    int FirstSize = (int)strlen(First);
+    int SecondSize = (int)strlen(Second);
+    int BufferSize = (FirstSize + SecondSize) + 1;
+    char *Result = (char*)malloc(BufferSize);
+    memcpy(Result, First, FirstSize);
+    memcpy(Result + FirstSize, Second, SecondSize);
+    Result[BufferSize - 1] = '\0';
+    return Result;
+}
+
+bool
+StringsMatch(char *First, char *Second)
+{
+    int FirstSize = (int)strlen(First);
+    int SecondSize = (int)strlen(Second);
+    if (FirstSize != SecondSize)
+        return false;
+    int Index = -1;
+    while (++Index < FirstSize)
+    {
+        if (First[Index] != Second[Index])
+            return false;
+    }
+    return true;
 }

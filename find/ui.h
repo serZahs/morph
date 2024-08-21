@@ -46,9 +46,12 @@ DrawTextbox(int Id, Rectangle Bounds, Color Background, Color TextColor, char *T
     
     if (Widgets[Id].Focused)
     {
+        // TODO: GetKeyPressed returns the size of the queue. Right now we assume there is only one key!
         int Key = GetKeyPressed();
+        // Alphanumeric
         if (Key >= KEY_APOSTROPHE && Key <= KEY_GRAVE)
         {
+            // Alphabet
             if (Key >= KEY_A && Key <= KEY_Z)
             {
                 if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
@@ -56,9 +59,45 @@ DrawTextbox(int Id, Rectangle Bounds, Color Background, Color TextColor, char *T
                 else
                     AppendChar(Text, BufferSize, Key+32);
             }
+            // Numbers
+            else if (Key >= KEY_ZERO && Key <= KEY_NINE)
+            {
+                if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
+                {
+                    if (Key == KEY_ONE)
+                        AppendChar(Text, BufferSize, '!');
+                    if (Key == KEY_TWO)
+                        AppendChar(Text, BufferSize, '@');
+                    if (Key == KEY_THREE)
+                        AppendChar(Text, BufferSize, '#');
+                    if (Key == KEY_FOUR)
+                        AppendChar(Text, BufferSize, '$');
+                    if (Key == KEY_FIVE)
+                        AppendChar(Text, BufferSize, '%');
+                    if (Key == KEY_SIX)
+                        AppendChar(Text, BufferSize, '^');
+                    if (Key == KEY_SEVEN)
+                        AppendChar(Text, BufferSize, '&');
+                    if (Key == KEY_EIGHT)
+                        AppendChar(Text, BufferSize, '*');
+                    if (Key == KEY_NINE)
+                        AppendChar(Text, BufferSize, '(');
+                    if (Key == KEY_ZERO)
+                        AppendChar(Text, BufferSize, ')');
+                }
+                else
+                    AppendChar(Text, BufferSize, Key);
+            }
+            // Other alphanumeric
             else
             {
-                AppendChar(Text, BufferSize, Key);
+                if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
+                {
+                    if (Key == KEY_SEMICOLON)
+                        AppendChar(Text, BufferSize, ':');
+                }
+                else
+                    AppendChar(Text, BufferSize, Key);
             }
         }
         if (IsKeyDown(KEY_BACKSPACE))
