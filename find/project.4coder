@@ -1,0 +1,18 @@
+version(1);
+project_name = "find";
+
+command_list = {
+  {
+	.name = "compile",
+	.out = "*results",
+	.cmd = { {"build.bat", .os="win"} },
+  },
+  {
+    .name = "run",
+    .out = "*results",
+    .cmd = { {"build\main.exe", .os="win"} },
+  },
+};
+
+fkey_command[3] = "compile";
+fkey_command[2] = "run";

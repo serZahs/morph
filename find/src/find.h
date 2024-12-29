@@ -79,11 +79,6 @@ FindInFile(char *Directory, char *Filename, char *StartingDirectory, char *Patte
     return false;
 }
 
-int
-Find(find_results *ResultList, const char *FilePattern, const char *Pattern)
-{
-    return FindEx(ResultList, FilePattern, NULL, Pattern, true);
-}
 
 int
 FindEx(find_results *ResultList, const char *FilePattern, char *StartingDirectory, const char *Pattern, int FreePool)
@@ -129,7 +124,7 @@ FindEx(find_results *ResultList, const char *FilePattern, char *StartingDirector
         }
         else
         {
-            char *Directory = Substring((char*)FilePattern, 0, StringFindLast((char*)FilePattern, '*')); // TODO: Leak!
+            char *Directory = Substring((char*)FilePattern, 0, StringFindLast((char*)FilePattern, '/') + 1); // TODO: Leak!
             int MatchCount;
             if (FindInFile(Directory, Filename, StartingDirectory, (char*)Pattern, &MatchCount))
             {
@@ -151,4 +146,11 @@ FindEx(find_results *ResultList, const char *FilePattern, char *StartingDirector
     FindClose(FindHandle);
     ResultList->Results = (result_instance*)ResultsPool.Data;
     return true;
+}
+
+
+int
+Find(find_results *ResultList, const char *FilePattern, const char *Pattern)
+{
+    return FindEx(ResultList, FilePattern, NULL, Pattern, true);
 }

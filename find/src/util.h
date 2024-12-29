@@ -24,7 +24,7 @@ InitPool(pool *Pool, int StartingSize)
 {
     Pool->Used = 0;
     Pool->Size = StartingSize;
-    Pool->Data = malloc(Pool->Size);
+    Pool->Data = (char*)malloc(Pool->Size);
 }
 
 char*
